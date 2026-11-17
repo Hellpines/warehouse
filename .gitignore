@@ -1,0 +1,26 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+## Databases
+*.db
+*.db-shm
+*.db-wal
+
+## OS / IDE
+.DS_Store
+Thumbs.db
+*.swp
+
+## Local tools / reports build
+.dotnet/
+report_assets/*.tmp
+__pycache__/
+*.pyc
+
+demo_output.txt
