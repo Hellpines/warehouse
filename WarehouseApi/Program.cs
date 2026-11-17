@@ -124,11 +124,12 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "WarehouseApi v1");
+    options.DocumentTitle = "Warehouse API – Swagger";
+});
 
 app.UseCors("DefaultCors");
 app.UseAuthentication();
@@ -141,8 +142,7 @@ app.MapGet("/api/health", (ILoggerFactory loggerFactory) =>
     return TypedResults.Ok(new { status = "ok", utc = DateTime.UtcNow });
 })
 .AllowAnonymous()
-.WithTags("Health")
-.WithOpenApi();
+.WithTags("Health");
 
 app.MapAuthEndpoints();
 app.MapProductEndpoints();
@@ -160,3 +160,4 @@ using (var scope = app.Services.CreateScope())
 app.Run();
 
 public partial class Program;
+

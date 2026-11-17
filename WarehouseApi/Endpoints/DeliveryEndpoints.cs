@@ -21,16 +21,14 @@ public static class DeliveryEndpoints
             var result = await service.GetAsync(query, ct);
             return TypedResults.Ok(result);
         })
-        .WithName("GetDeliveries")
-        .WithOpenApi();
+        .WithName("GetDeliveries");
 
         group.MapGet("/{id:int}", async (int id, IDeliveryService service, CancellationToken ct) =>
         {
             var delivery = await service.GetByIdAsync(id, ct);
             return delivery is null ? Results.NotFound() : TypedResults.Ok(delivery);
         })
-        .WithName("GetDeliveryById")
-        .WithOpenApi();
+        .WithName("GetDeliveryById");
 
         group.MapPost("/", async (DeliveryCreateDto dto, IDeliveryService service, CancellationToken ct) =>
         {
@@ -43,8 +41,7 @@ public static class DeliveryEndpoints
             return TypedResults.Created($"/api/deliveries/{created.Id}", created);
         })
         .RequireAuthorization("WarehouseStaff")
-        .WithName("CreateDelivery")
-        .WithOpenApi();
+        .WithName("CreateDelivery");
 
         group.MapDelete("/{id:int}", async (int id, IDeliveryService service, CancellationToken ct) =>
         {
@@ -52,8 +49,7 @@ public static class DeliveryEndpoints
             return deleted ? Results.NoContent() : Results.NotFound();
         })
         .RequireAuthorization("ManagerOnly")
-        .WithName("DeleteDelivery")
-        .WithOpenApi();
+        .WithName("DeleteDelivery");
 
         return group;
     }

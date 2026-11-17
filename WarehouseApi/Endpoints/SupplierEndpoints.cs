@@ -21,16 +21,14 @@ public static class SupplierEndpoints
             var result = await service.GetAsync(query, ct);
             return TypedResults.Ok(result);
         })
-        .WithName("GetSuppliers")
-        .WithOpenApi();
+        .WithName("GetSuppliers");
 
         group.MapGet("/{id:int}", async (int id, ISupplierService service, CancellationToken ct) =>
         {
             var supplier = await service.GetByIdAsync(id, ct);
             return supplier is null ? Results.NotFound() : TypedResults.Ok(supplier);
         })
-        .WithName("GetSupplierById")
-        .WithOpenApi();
+        .WithName("GetSupplierById");
 
         group.MapPost("/", async (SupplierCreateDto dto, ISupplierService service, CancellationToken ct) =>
         {
@@ -43,8 +41,7 @@ public static class SupplierEndpoints
             return TypedResults.Created($"/api/suppliers/{created.Id}", created);
         })
         .RequireAuthorization("ManagerOnly")
-        .WithName("CreateSupplier")
-        .WithOpenApi();
+        .WithName("CreateSupplier");
 
         group.MapPut("/{id:int}", async (int id, SupplierUpdateDto dto, ISupplierService service, CancellationToken ct) =>
         {
@@ -57,8 +54,7 @@ public static class SupplierEndpoints
             return updated is null ? Results.NotFound() : TypedResults.Ok(updated);
         })
         .RequireAuthorization("ManagerOnly")
-        .WithName("UpdateSupplier")
-        .WithOpenApi();
+        .WithName("UpdateSupplier");
 
         group.MapDelete("/{id:int}", async (int id, ISupplierService service, CancellationToken ct) =>
         {
@@ -66,8 +62,7 @@ public static class SupplierEndpoints
             return deleted ? Results.NoContent() : Results.NotFound();
         })
         .RequireAuthorization("ManagerOnly")
-        .WithName("DeleteSupplier")
-        .WithOpenApi();
+        .WithName("DeleteSupplier");
 
         return group;
     }

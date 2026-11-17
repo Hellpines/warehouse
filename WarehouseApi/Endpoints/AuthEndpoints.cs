@@ -26,8 +26,7 @@ public static class AuthEndpoints
                 : TypedResults.Ok(result);
         })
         .AllowAnonymous()
-        .WithName("Login")
-        .WithOpenApi();
+        .WithName("Login");
 
         return group;
     }

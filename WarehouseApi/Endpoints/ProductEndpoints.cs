@@ -21,16 +21,14 @@ public static class ProductEndpoints
             var result = await service.GetAsync(query, ct);
             return TypedResults.Ok(result);
         })
-        .WithName("GetProducts")
-        .WithOpenApi();
+        .WithName("GetProducts");
 
         group.MapGet("/{id:int}", async (int id, IProductService service, CancellationToken ct) =>
         {
             var product = await service.GetByIdAsync(id, ct);
             return product is null ? Results.NotFound() : TypedResults.Ok(product);
         })
-        .WithName("GetProductById")
-        .WithOpenApi();
+        .WithName("GetProductById");
 
         group.MapPost("/", async (ProductCreateDto dto, IProductService service, CancellationToken ct) =>
         {
@@ -43,8 +41,7 @@ public static class ProductEndpoints
             return TypedResults.Created($"/api/products/{created.Id}", created);
         })
         .RequireAuthorization("ManagerOnly")
-        .WithName("CreateProduct")
-        .WithOpenApi();
+        .WithName("CreateProduct");
 
         group.MapPut("/{id:int}", async (int id, ProductUpdateDto dto, IProductService service, CancellationToken ct) =>
         {
@@ -57,8 +54,7 @@ public static class ProductEndpoints
             return updated is null ? Results.NotFound() : TypedResults.Ok(updated);
         })
         .RequireAuthorization("ManagerOnly")
-        .WithName("UpdateProduct")
-        .WithOpenApi();
+        .WithName("UpdateProduct");
 
         group.MapDelete("/{id:int}", async (int id, IProductService service, CancellationToken ct) =>
         {
@@ -66,8 +62,7 @@ public static class ProductEndpoints
             return deleted ? Results.NoContent() : Results.NotFound();
         })
         .RequireAuthorization("ManagerOnly")
-        .WithName("DeleteProduct")
-        .WithOpenApi();
+        .WithName("DeleteProduct");
 
         return group;
     }

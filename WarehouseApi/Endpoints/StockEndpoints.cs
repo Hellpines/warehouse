@@ -22,16 +22,14 @@ public static class StockEndpoints
             var result = await service.GetAsync(query, lowOnly, ct);
             return TypedResults.Ok(result);
         })
-        .WithName("GetStock")
-        .WithOpenApi();
+        .WithName("GetStock");
 
         group.MapGet("/{productId:int}", async (int productId, IStockService service, CancellationToken ct) =>
         {
             var stock = await service.GetByProductIdAsync(productId, ct);
             return stock is null ? Results.NotFound() : TypedResults.Ok(stock);
         })
-        .WithName("GetStockByProduct")
-        .WithOpenApi();
+        .WithName("GetStockByProduct");
 
         group.MapPut("/{productId:int}", async (
             int productId,
@@ -48,8 +46,7 @@ public static class StockEndpoints
             return updated is null ? Results.NotFound() : TypedResults.Ok(updated);
         })
         .RequireAuthorization("WarehouseStaff")
-        .WithName("SetStockQuantity")
-        .WithOpenApi();
+        .WithName("SetStockQuantity");
 
         return group;
     }
