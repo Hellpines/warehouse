@@ -1,0 +1,32 @@
+﻿=== HEALTH ===
+{"status":"ok","utc":"2026-11-17T20:16:20.632407Z"}
+
+=== LOGIN manager ===
+role=Manager; tokenLen=467
+
+=== LOGIN keeper ===
+role=Storekeeper
+
+=== PRODUCTS (manager, page=1, search=USB) ===
+total=1; items={"id":3,"name":"Клавиатура USB","article":"KB-USB-01","unit":"шт","category":"Периферия","minStockLevel":10,"quantity":20,"isLowStock":false}
+
+=== STOCK lowOnly ===
+
+
+=== DELIVERIES ===
+total=2
+
+=== KEEPER FORBIDDEN create product (expect 403) ===
+status=403
+
+=== MANAGER create product ===
+{"id":6,"name":"?????-???????????","article":"FLD-01","unit":"??","category":"??????????","minStockLevel":8,"quantity":0,"isLowStock":true}
+
+=== KEEPER set stock ===
+{"productId":6,"article":"FLD-01","name":"?????-???????????","quantity":12,"unit":"??","minStockLevel":8,"isLowStock":false,"lastUpdated":"2026-11-17T20:16:21.7259202Z"}
+
+=== VALIDATION error ===
+{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"UserName":["Укажите имя пользователя"],"Password":["The field Password must be a string or array type with a minimum length of '4'."]}}
+
+=== SWAGGER ===
+swagger status=200

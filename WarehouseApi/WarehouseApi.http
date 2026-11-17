@@ -1,0 +1,49 @@
+@host = http://localhost:5019
+@token = {{login.response.body.accessToken}}
+
+### Health
+GET {{host}}/api/health
+
+### Login manager
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "userName": "manager",
+  "password": "Manager123!"
+}
+
+### Login storekeeper
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "userName": "keeper",
+  "password": "Keeper123!"
+}
+
+### Products
+GET {{host}}/api/products?page=1&pageSize=10&search=&sortBy=name
+Authorization: Bearer {{token}}
+
+### Create product (Manager)
+POST {{host}}/api/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Степлер",
+  "article": "STP-01",
+  "unit": "шт",
+  "category": "Канцтовары",
+  "minStockLevel": 5
+}
+
+### Stock low only
+GET {{host}}/api/stock?lowOnly=true
+Authorization: Bearer {{token}}
+
+### Deliveries
+GET {{host}}/api/deliveries?page=1&pageSize=10
+Authorization: Bearer {{token}}
