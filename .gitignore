@@ -11,6 +11,10 @@ obj/
 *.db
 *.db-shm
 *.db-wal
+artifacts/
+.local-packages/
+*.nupkg
+
 
 ## Secrets / local config
 **/secrets.json

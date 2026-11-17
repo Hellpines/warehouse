@@ -1,0 +1,131 @@
+@page "/deliveries"
+@attribute [Authorize]
+@inject WarehouseApiClient Api
+@inject TokenStore Tokens
+
+<PageTitle>Поставки — Склад</PageTitle>
+
+<div class="page-head">
+    <div>
+        <h1>Поставки</h1>
+        <p>Накладные и позиции. Создание доступно складу и менеджеру.</p>
+    </div>
+    @if (CanCreate)
+    {
+        <button class="btn" @onclick="() => _showForm = !_showForm">Новая поставка</button>
+    }
+</div>
+
+@if (_showForm && CanCreate)
+{
+    <div class="panel panel-pad" style="margin-bottom:18px">
+        <div class="form-grid">
+            <div class="field">
+                <label>Поставщик</label>
+                <select class="input select" @bind="_supplierId">
+                    @foreach (var s in _suppliers)
+                    {
+                        <option value="@s.Id">@s.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="field">
+                <label>Номер документа</label>
+                <input class="input" @bind="_doc" />
+            </div>
+            <div class="field">
+                <label>Id товара</label>
+                <InputNumber class="input" @bind-Value="_productId" />
+            </div>
+            <div class="field">
+                <label>Кол-во</label>
+                <InputNumber class="input" @bind-Value="_qty" />
+            </div>
+            <div class="field">
+                <label>Цена</label>
+                <InputNumber class="input" @bind-Value="_price" />
+            </div>
+            <div class="field" style="display:flex;align-items:end">
+                <button class="btn" @onclick="CreateAsync">Зарегистрировать</button>
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(_message)) { <p class="muted">@_message</p> }
+    </div>
+}
+
+<div class="panel">
+    @foreach (var d in _items)
+    {
+        <div class="panel-pad" style="border-bottom:1px solid var(--line)">
+            <div class="toolbar" style="justify-content:space-between">
+                <div>
+                    <strong>@d.DocumentNumber</strong>
+                    <span class="muted"> · @d.DeliveryDate.ToLocalTime().ToString("dd.MM.yyyy") · @(d.SupplierName ?? $"#{d.SupplierId}")</span>
+                </div>
+                @if (IsManager)
+                {
+                    <button class="danger-btn" @onclick="() => DeleteAsync(d.Id)">Удалить</button>
+                }
+            </div>
+            <ul class="muted">
+                @foreach (var i in d.Items)
+                {
+                    <li>@(i.Article ?? i.ProductId.ToString()): @i.Quantity × @i.UnitPrice</li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+@code {
+    private List<DeliveryDto> _items = [];
+    private List<SupplierDto> _suppliers = [];
+    private bool _showForm;
+    private int _supplierId = 1;
+    private string _doc = string.Empty;
+    private int _productId = 1;
+    private decimal _qty = 1;
+    private decimal _price;
+    private string? _message;
+
+    private bool IsManager => Tokens.Session?.Role == "Manager";
+    private bool CanCreate => Tokens.Session?.Role is "Manager" or "Storekeeper";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        var suppliers = await Api.GetSuppliersAsync();
+        _suppliers = suppliers?.Items.ToList() ?? [];
+        if (_suppliers.Count > 0) _supplierId = _suppliers[0].Id;
+    }
+
+    private async Task LoadAsync()
+    {
+        var page = await Api.GetDeliveriesAsync();
+        _items = page?.Items.ToList() ?? [];
+    }
+
+    private async Task CreateAsync()
+    {
+        var body = new
+        {
+            supplierId = _supplierId,
+            documentNumber = _doc,
+            notes = "Из Blazor",
+            items = new[]
+            {
+                new { productId = _productId, quantity = _qty, unitPrice = _price }
+            }
+        };
+        var created = await Api.CreateDeliveryAsync(body);
+        _message = created is null ? "Ошибка создания поставки." : $"Создана #{created.Id}";
+        _showForm = false;
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await Api.DeleteDeliveryAsync(id);
+        await LoadAsync();
+    }
+}

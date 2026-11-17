@@ -1,0 +1,32 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "5019:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Jwt__Key: WarehouseLabJwtSecretKey_ChangeMe_32+chars!
+      Jwt__Issuer: WarehouseApi
+      Jwt__Audience: WarehouseClients
+      Cors__AllowedOrigins__0: http://localhost:5288
+      Cors__AllowedOrigins__1: http://localhost:8080
+      ConnectionStrings__Warehouse: Data Source=/data/warehouse.db
+    volumes:
+      - warehouse-data:/data
+
+  blazor:
+    build:
+      context: .
+      dockerfile: Dockerfile.blazor
+    ports:
+      - "5288:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ApiBaseUrl: http://api:8080/
+    depends_on:
+      - api
+
+volumes:
+  warehouse-data:

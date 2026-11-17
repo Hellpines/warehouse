@@ -1,0 +1,95 @@
+@page "/stock"
+@attribute [Authorize]
+@inject WarehouseApiClient Api
+@inject TokenStore Tokens
+
+<PageTitle>Остатки — Склад</PageTitle>
+
+<div class="page-head">
+    <div>
+        <h1>Остатки</h1>
+        <p>Текущие количества и быстрая корректировка кладовщиком.</p>
+    </div>
+    <div class="toolbar">
+        <label class="muted"><input type="checkbox" @bind="_lowOnly" @bind:after="LoadAsync" /> только дефицит</label>
+        <button class="ghost-btn" @onclick="LoadAsync">Обновить</button>
+    </div>
+</div>
+
+<div class="panel">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Артикул</th>
+                <th>Товар</th>
+                <th>Остаток</th>
+                <th>Мин.</th>
+                <th>Обновлён</th>
+                @if (CanEdit) { <th></th> }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in _items)
+            {
+                <tr>
+                    <td>@s.Article</td>
+                    <td>@s.Name</td>
+                    <td>
+                        <span class="badge @(s.IsLowStock ? "badge-low" : "badge-ok")">@s.Quantity @s.Unit</span>
+                    </td>
+                    <td>@s.MinStockLevel</td>
+                    <td>@s.LastUpdated.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    @if (CanEdit)
+                    {
+                        <td>
+                            @if (_editId == s.ProductId)
+                            {
+                                <div class="toolbar">
+                                    <InputNumber class="input" style="width:110px" @bind-Value="_qty" />
+                                    <button class="btn" @onclick="SaveAsync">OK</button>
+                                    <button class="ghost-btn" @onclick="() => _editId = null">×</button>
+                                </div>
+                            }
+                            else
+                            {
+                                <button class="ghost-btn" @onclick="() => BeginEdit(s)">Изменить</button>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<StockDto> _items = [];
+    private bool _lowOnly;
+    private int? _editId;
+    private decimal _qty;
+
+    private bool CanEdit =>
+        Tokens.Session?.Role is "Manager" or "Storekeeper";
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var page = await Api.GetStockAsync(_lowOnly);
+        _items = page?.Items.ToList() ?? [];
+    }
+
+    private void BeginEdit(StockDto s)
+    {
+        _editId = s.ProductId;
+        _qty = s.Quantity;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_editId is null) return;
+        await Api.SetStockAsync(_editId.Value, _qty);
+        _editId = null;
+        await LoadAsync();
+    }
+}

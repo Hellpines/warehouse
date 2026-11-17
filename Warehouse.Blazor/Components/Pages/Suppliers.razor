@@ -1,0 +1,126 @@
+@page "/suppliers"
+@attribute [Authorize]
+@inject WarehouseApiClient Api
+@inject TokenStore Tokens
+
+<PageTitle>Поставщики — Склад</PageTitle>
+
+<div class="page-head">
+    <div>
+        <h1>Поставщики</h1>
+        <p>Справочник контрагентов. Изменение — только менеджер.</p>
+    </div>
+    @if (IsManager)
+    {
+        <button class="btn" @onclick="() => _showForm = !_showForm">Добавить</button>
+    }
+</div>
+
+@if (_showForm && IsManager)
+{
+    <div class="panel panel-pad" style="margin-bottom:18px">
+        <div class="form-grid">
+            <div class="field full"><label>Название</label><InputText class="input" @bind-Value="_form.Name" /></div>
+            <div class="field"><label>Контакт</label><InputText class="input" @bind-Value="_form.ContactPerson" /></div>
+            <div class="field"><label>Телефон</label><InputText class="input" @bind-Value="_form.Phone" /></div>
+            <div class="field"><label>Email</label><InputText class="input" @bind-Value="_form.Email" /></div>
+            <div class="field"><label>Адрес</label><InputText class="input" @bind-Value="_form.Address" /></div>
+            <div class="field" style="display:flex;align-items:end;gap:8px">
+                <button class="btn" @onclick="SaveAsync">Сохранить</button>
+                <button class="ghost-btn" @onclick="Reset">Сброс</button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="panel">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Контакт</th>
+                <th>Телефон</th>
+                <th>Email</th>
+                @if (IsManager) { <th></th> }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in _items)
+            {
+                <tr>
+                    <td>@s.Name</td>
+                    <td>@(s.ContactPerson ?? "—")</td>
+                    <td>@(s.Phone ?? "—")</td>
+                    <td>@(s.Email ?? "—")</td>
+                    @if (IsManager)
+                    {
+                        <td class="toolbar">
+                            <button class="ghost-btn" @onclick="() => Edit(s)">Изменить</button>
+                            <button class="danger-btn" @onclick="() => DeleteAsync(s.Id)">Удалить</button>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private List<SupplierDto> _items = [];
+    private bool _showForm;
+    private int? _editId;
+    private SupplierFormModel _form = new();
+
+    private bool IsManager => Tokens.Session?.Role == "Manager";
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var page = await Api.GetSuppliersAsync();
+        _items = page?.Items.ToList() ?? [];
+    }
+
+    private void Edit(SupplierDto s)
+    {
+        _editId = s.Id;
+        _form = new SupplierFormModel
+        {
+            Name = s.Name,
+            ContactPerson = s.ContactPerson,
+            Phone = s.Phone,
+            Email = s.Email,
+            Address = s.Address
+        };
+        _showForm = true;
+    }
+
+    private void Reset()
+    {
+        _editId = null;
+        _form = new();
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name)) return;
+        var dto = new SupplierDto(0, _form.Name, _form.ContactPerson, _form.Phone, _form.Email, _form.Address);
+        if (_editId is null)
+        {
+            await Api.CreateSupplierAsync(dto);
+        }
+        else
+        {
+            await Api.UpdateSupplierAsync(_editId.Value, dto);
+        }
+        Reset();
+        _showForm = false;
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await Api.DeleteSupplierAsync(id);
+        await LoadAsync();
+    }
+}

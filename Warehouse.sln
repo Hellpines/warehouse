@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WarehouseApi", "WarehouseAp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WarehouseApp", "WarehouseApp\WarehouseApp.csproj", "{5ECB5B1F-D7B7-496C-A05D-D73A04AFE205}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Warehouse.Blazor", "Warehouse.Blazor\Warehouse.Blazor.csproj", "{D85B913C-762F-44D3-95EA-7A6D6F524AD1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WarehouseApi.Tests", "WarehouseApi.Tests\WarehouseApi.Tests.csproj", "{88725B33-6CD1-4FD5-A4AA-B9DD187558D1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{5ECB5B1F-D7B7-496C-A05D-D73A04AFE205}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5ECB5B1F-D7B7-496C-A05D-D73A04AFE205}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5ECB5B1F-D7B7-496C-A05D-D73A04AFE205}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D85B913C-762F-44D3-95EA-7A6D6F524AD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D85B913C-762F-44D3-95EA-7A6D6F524AD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D85B913C-762F-44D3-95EA-7A6D6F524AD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D85B913C-762F-44D3-95EA-7A6D6F524AD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88725B33-6CD1-4FD5-A4AA-B9DD187558D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88725B33-6CD1-4FD5-A4AA-B9DD187558D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88725B33-6CD1-4FD5-A4AA-B9DD187558D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88725B33-6CD1-4FD5-A4AA-B9DD187558D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

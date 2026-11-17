@@ -1,0 +1,156 @@
+@page "/products"
+@attribute [Authorize]
+@inject WarehouseApiClient Api
+@inject TokenStore Tokens
+
+<PageTitle>Товары — Склад</PageTitle>
+
+<div class="page-head">
+    <div>
+        <h1>Товары</h1>
+        <p>Номенклатура склада с поиском и CRUD для менеджера.</p>
+    </div>
+    <div class="toolbar">
+        <input class="input" style="width:220px" placeholder="Поиск…" @bind="_search" @bind:event="oninput" />
+        <button class="ghost-btn" @onclick="LoadAsync">Найти</button>
+        @if (IsManager)
+        {
+            <button class="btn" @onclick="() => _showForm = !_showForm">@( _showForm ? "Скрыть форму" : "Новый товар" )</button>
+        }
+    </div>
+</div>
+
+@if (_showForm && IsManager)
+{
+    <div class="panel panel-pad" style="margin-bottom:18px">
+        <EditForm Model="_form" OnValidSubmit="SaveAsync">
+            <DataAnnotationsValidator />
+            <div class="form-grid">
+                <div class="field"><label>Название</label><InputText class="input" @bind-Value="_form.Name" /><ValidationMessage For="() => _form.Name" /></div>
+                <div class="field"><label>Артикул</label><InputText class="input" @bind-Value="_form.Article" disabled="@(_editId is not null)" /><ValidationMessage For="() => _form.Article" /></div>
+                <div class="field"><label>Ед.</label><InputText class="input" @bind-Value="_form.Unit" /></div>
+                <div class="field"><label>Категория</label><InputText class="input" @bind-Value="_form.Category" /></div>
+                <div class="field"><label>Мин. остаток</label><InputNumber class="input" @bind-Value="_form.MinStockLevel" /></div>
+                <div class="field" style="display:flex;align-items:end;gap:8px">
+                    <button class="btn" type="submit">Сохранить</button>
+                    <button class="ghost-btn" type="button" @onclick="ResetForm">Сброс</button>
+                </div>
+            </div>
+        </EditForm>
+        @if (!string.IsNullOrWhiteSpace(_message)) { <p class="muted">@_message</p> }
+    </div>
+}
+
+<div class="panel">
+    @if (_items.Count == 0)
+    {
+        <div class="panel-pad"><p class="empty-note">Товаров пока нет.</p></div>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Артикул</th>
+                    <th>Название</th>
+                    <th>Остаток</th>
+                    <th>Категория</th>
+                    @if (IsManager) { <th></th> }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in _items)
+                {
+                    <tr>
+                        <td>@p.Article</td>
+                        <td>@p.Name</td>
+                        <td>
+                            @if (p.IsLowStock)
+                            {
+                                <span class="badge badge-low">@p.Quantity @p.Unit</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-ok">@p.Quantity @p.Unit</span>
+                            }
+                        </td>
+                        <td>@(p.Category ?? "—")</td>
+                        @if (IsManager)
+                        {
+                            <td class="toolbar">
+                                <button class="ghost-btn" @onclick="() => Edit(p)">Изменить</button>
+                                <button class="danger-btn" @onclick="() => DeleteAsync(p.Id)">Удалить</button>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private List<ProductDto> _items = [];
+    private string _search = string.Empty;
+    private bool _showForm;
+    private int? _editId;
+    private ProductCreateModel _form = new();
+    private string? _message;
+
+    private bool IsManager => Tokens.Session?.Role == "Manager";
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var page = await Api.GetProductsAsync(_search);
+        _items = page?.Items.ToList() ?? [];
+    }
+
+    private void Edit(ProductDto p)
+    {
+        _editId = p.Id;
+        _showForm = true;
+        _form = new ProductCreateModel
+        {
+            Name = p.Name,
+            Article = p.Article,
+            Unit = p.Unit,
+            Category = p.Category,
+            MinStockLevel = p.MinStockLevel
+        };
+    }
+
+    private void ResetForm()
+    {
+        _editId = null;
+        _form = new();
+        _message = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        _message = null;
+        if (_editId is null)
+        {
+            var created = await Api.CreateProductAsync(_form);
+            _message = created is null ? "Не удалось создать товар." : $"Создан #{created.Id}";
+        }
+        else
+        {
+            var ok = await Api.UpdateProductAsync(_editId.Value, _form);
+            _message = ok ? "Сохранено." : "Ошибка обновления.";
+        }
+
+        ResetForm();
+        _showForm = false;
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        var ok = await Api.DeleteProductAsync(id);
+        _message = ok ? "Удалено." : "Удаление отклонено (возможно, товар в поставках).";
+        await LoadAsync();
+    }
+}

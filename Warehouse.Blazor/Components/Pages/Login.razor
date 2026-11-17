@@ -1,0 +1,100 @@
+@page "/login"
+@layout Layout.MainLayout
+@inject WarehouseApiClient Api
+@inject TokenStore Tokens
+@inject JwtAuthStateProvider Auth
+@inject NavigationManager Nav
+
+<div class="login-screen">
+    <section class="login-hero">
+        <div class="login-hero-inner">
+            <span class="login-kicker">сквозной проект · ЛР 9</span>
+            <h1>Склад</h1>
+            <p>Товары, поставки и остатки в одном контуре: клиент → API → база.</p>
+        </div>
+    </section>
+
+    <section class="login-panel">
+        <div class="login-card">
+            <h2>Вход</h2>
+            <p class="hint">Авторизация через JWT к Warehouse API</p>
+
+            <EditForm Model="_model" OnValidSubmit="SubmitAsync">
+                <DataAnnotationsValidator />
+                <div class="field">
+                    <label>Логин</label>
+                    <InputText class="input" @bind-Value="_model.UserName" />
+                    <ValidationMessage For="() => _model.UserName" />
+                </div>
+                <div class="field" style="margin-top:12px">
+                    <label>Пароль</label>
+                    <InputText type="password" class="input" @bind-Value="_model.Password" />
+                    <ValidationMessage For="() => _model.Password" />
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <p class="error-text">@_error</p>
+                }
+
+                <div class="login-actions">
+                    <button class="btn" type="submit" disabled="@_busy">
+                        @(_busy ? "Входим…" : "Войти")
+                    </button>
+                </div>
+            </EditForm>
+
+            <div class="demo-note">
+                manager / Manager123! · keeper / Keeper123!
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private readonly LoginModel _model = new();
+    private string? _error;
+    private bool _busy;
+
+    protected override void OnInitialized()
+    {
+        if (Tokens.IsAuthenticated)
+        {
+            Nav.NavigateTo("/");
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await Api.LoginAsync(_model);
+            if (result is null)
+            {
+                _error = "Неверный логин или пароль.";
+                return;
+            }
+
+            Tokens.Set(new SessionInfo
+            {
+                AccessToken = result.AccessToken,
+                UserName = result.UserName,
+                Role = result.Role,
+                DisplayName = result.DisplayName,
+                ExpiresAtUtc = result.ExpiresAtUtc
+            });
+            Auth.Notify();
+            Nav.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            _error = $"Не удалось связаться с API: {ex.Message}";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

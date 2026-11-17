@@ -1,0 +1,65 @@
+﻿@inherits LayoutComponentBase
+@inject TokenStore Tokens
+@inject JwtAuthStateProvider Auth
+@inject NavigationManager Nav
+
+@if (IsLoginPage)
+{
+    @Body
+}
+else
+{
+    <div class="shell">
+        <aside class="rail">
+            <div class="brand-block">
+                <div class="brand-mark">СК</div>
+                <div>
+                    <div class="brand-name">Склад</div>
+                    <div class="brand-sub">учёт поставок</div>
+                </div>
+            </div>
+
+            <nav class="rail-nav">
+                <NavLink class="rail-link" href="/" Match="NavLinkMatch.All">Обзор</NavLink>
+                <NavLink class="rail-link" href="/products">Товары</NavLink>
+                <NavLink class="rail-link" href="/stock">Остатки</NavLink>
+                <NavLink class="rail-link" href="/deliveries">Поставки</NavLink>
+                <NavLink class="rail-link" href="/suppliers">Поставщики</NavLink>
+            </nav>
+
+            <div class="rail-foot">
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="user-chip">
+                            <strong>@(Tokens.Session?.DisplayName ?? context.User.Identity?.Name)</strong>
+                            <span>@RoleLabel</span>
+                        </div>
+                        <button class="ghost-btn" @onclick="Logout">Выйти</button>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </aside>
+
+        <main class="stage">
+            @Body
+        </main>
+    </div>
+}
+
+@code {
+    private bool IsLoginPage => Nav.ToBaseRelativePath(Nav.Uri).StartsWith("login", StringComparison.OrdinalIgnoreCase);
+
+    private string RoleLabel => Tokens.Session?.Role switch
+    {
+        "Manager" => "менеджер",
+        "Storekeeper" => "кладовщик",
+        _ => Tokens.Session?.Role ?? string.Empty
+    };
+
+    private void Logout()
+    {
+        Tokens.Clear();
+        Auth.Notify();
+        Nav.NavigateTo("/login");
+    }
+}

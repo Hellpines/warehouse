@@ -1,0 +1,90 @@
+﻿@page "/"
+@attribute [Authorize]
+@inject WarehouseApiClient Api
+
+<PageTitle>Обзор — Склад</PageTitle>
+
+<div class="page-head">
+    <div>
+        <h1>Обзор смены</h1>
+        <p>Сводка по номенклатуре, дефициту и последним поставкам.</p>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <p class="muted">Загрузка…</p>
+}
+else
+{
+    <div class="stats">
+        <div class="stat">
+            <span class="muted">Товары</span>
+            <strong>@_products</strong>
+        </div>
+        <div class="stat">
+            <span class="muted">Низкий остаток</span>
+            <strong>@_low</strong>
+        </div>
+        <div class="stat">
+            <span class="muted">Поставки</span>
+            <strong>@_deliveries</strong>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-pad">
+            <h3 style="margin:0 0 8px;font-family:var(--font-display)">Что требует внимания</h3>
+            <p class="muted" style="margin:0">Позиции ниже минимального остатка</p>
+        </div>
+        @if (_lowItems.Count == 0)
+        {
+            <div class="panel-pad"><p class="empty-note">Дефицита нет — можно спокойно работать.</p></div>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Артикул</th>
+                        <th>Товар</th>
+                        <th>Остаток</th>
+                        <th>Мин.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in _lowItems)
+                    {
+                        <tr>
+                            <td>@s.Article</td>
+                            <td>@s.Name</td>
+                            <td><span class="badge badge-low">@s.Quantity @s.Unit</span></td>
+                            <td>@s.MinStockLevel</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private int _products;
+    private int _low;
+    private int _deliveries;
+    private List<StockDto> _lowItems = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var products = await Api.GetProductsAsync();
+        var stock = await Api.GetStockAsync(lowOnly: true);
+        var deliveries = await Api.GetDeliveriesAsync();
+
+        _products = products?.TotalCount ?? 0;
+        _low = stock?.TotalCount ?? 0;
+        _deliveries = deliveries?.TotalCount ?? 0;
+        _lowItems = stock?.Items.ToList() ?? [];
+        _loading = false;
+    }
+}
