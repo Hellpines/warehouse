@@ -2,13 +2,15 @@
 @attribute [Authorize]
 @inject WarehouseApiClient Api
 @inject TokenStore Tokens
+@inject SessionPersistence Sessions
+@inject NavigationManager Nav
 
 <PageTitle>Товары — Склад</PageTitle>
 
 <div class="page-head">
     <div>
         <h1>Товары</h1>
-        <p>Номенклатура склада с поиском и CRUD для менеджера.</p>
+        <p>Номенклатура и поиск.</p>
     </div>
     <div class="toolbar">
         <input class="input" style="width:220px" placeholder="Поиск…" @bind="_search" @bind:event="oninput" />
@@ -99,7 +101,16 @@
 
     private bool IsManager => Tokens.Session?.Role == "Manager";
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Sessions.TryRestoreAsync())
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {

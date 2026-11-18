@@ -1,23 +1,20 @@
 @page "/login"
 @layout Layout.MainLayout
 @inject WarehouseApiClient Api
-@inject TokenStore Tokens
-@inject JwtAuthStateProvider Auth
+@inject SessionPersistence Sessions
 @inject NavigationManager Nav
 
 <div class="login-screen">
     <section class="login-hero">
         <div class="login-hero-inner">
-            <span class="login-kicker">сквозной проект · ЛР 9</span>
             <h1>Склад</h1>
-            <p>Товары, поставки и остатки в одном контуре: клиент → API → база.</p>
+            <p>Учёт товаров, поставок и остатков.</p>
         </div>
     </section>
 
     <section class="login-panel">
         <div class="login-card">
             <h2>Вход</h2>
-            <p class="hint">Авторизация через JWT к Warehouse API</p>
 
             <EditForm Model="_model" OnValidSubmit="SubmitAsync">
                 <DataAnnotationsValidator />
@@ -39,13 +36,14 @@
 
                 <div class="login-actions">
                     <button class="btn" type="submit" disabled="@_busy">
-                        @(_busy ? "Входим…" : "Войти")
+                        @(_busy ? "Вход…" : "Войти")
                     </button>
                 </div>
             </EditForm>
 
             <div class="demo-note">
-                manager / Manager123! · keeper / Keeper123!
+                manager / Manager123!<br />
+                keeper / Keeper123!
             </div>
         </div>
     </section>
@@ -56,9 +54,14 @@
     private string? _error;
     private bool _busy;
 
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (Tokens.IsAuthenticated)
+        if (!firstRender)
+        {
+            return;
+        }
+
+        if (await Sessions.TryRestoreAsync())
         {
             Nav.NavigateTo("/");
         }
@@ -71,13 +74,13 @@
         try
         {
             var result = await Api.LoginAsync(_model);
-            if (result is null)
+            if (result is null || string.IsNullOrWhiteSpace(result.AccessToken))
             {
                 _error = "Неверный логин или пароль.";
                 return;
             }
 
-            Tokens.Set(new SessionInfo
+            await Sessions.SaveAsync(new SessionInfo
             {
                 AccessToken = result.AccessToken,
                 UserName = result.UserName,
@@ -85,12 +88,11 @@
                 DisplayName = result.DisplayName,
                 ExpiresAtUtc = result.ExpiresAtUtc
             });
-            Auth.Notify();
             Nav.NavigateTo("/");
         }
         catch (Exception ex)
         {
-            _error = $"Не удалось связаться с API: {ex.Message}";
+            _error = $"Нет связи с API: {ex.Message}";
         }
         finally
         {

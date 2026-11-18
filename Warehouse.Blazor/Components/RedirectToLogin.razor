@@ -1,8 +1,22 @@
+@inject SessionPersistence Sessions
 @inject NavigationManager Nav
 
+<p class="muted" style="padding:2rem">Проверка сессии…</p>
+
 @code {
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Nav.NavigateTo("/login", forceLoad: false);
+        if (!firstRender)
+        {
+            return;
+        }
+
+        if (await Sessions.TryRestoreAsync())
+        {
+            Nav.NavigateTo("/", forceLoad: false);
+            return;
+        }
+
+        Nav.NavigateTo("/login");
     }
 }

@@ -1,6 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @inject TokenStore Tokens
-@inject JwtAuthStateProvider Auth
+@inject SessionPersistence Sessions
 @inject NavigationManager Nav
 
 @if (IsLoginPage)
@@ -15,7 +15,7 @@ else
                 <div class="brand-mark">СК</div>
                 <div>
                     <div class="brand-name">Склад</div>
-                    <div class="brand-sub">учёт поставок</div>
+                    <div class="brand-sub">товары и поставки</div>
                 </div>
             </div>
 
@@ -34,7 +34,7 @@ else
                             <strong>@(Tokens.Session?.DisplayName ?? context.User.Identity?.Name)</strong>
                             <span>@RoleLabel</span>
                         </div>
-                        <button class="ghost-btn" @onclick="Logout">Выйти</button>
+                        <button class="ghost-btn" @onclick="LogoutAsync">Выйти</button>
                     </Authorized>
                 </AuthorizeView>
             </div>
@@ -47,7 +47,8 @@ else
 }
 
 @code {
-    private bool IsLoginPage => Nav.ToBaseRelativePath(Nav.Uri).StartsWith("login", StringComparison.OrdinalIgnoreCase);
+    private bool IsLoginPage =>
+        Nav.ToBaseRelativePath(Nav.Uri).StartsWith("login", StringComparison.OrdinalIgnoreCase);
 
     private string RoleLabel => Tokens.Session?.Role switch
     {
@@ -56,10 +57,9 @@ else
         _ => Tokens.Session?.Role ?? string.Empty
     };
 
-    private void Logout()
+    private async Task LogoutAsync()
     {
-        Tokens.Clear();
-        Auth.Notify();
+        await Sessions.ClearAsync();
         Nav.NavigateTo("/login");
     }
 }

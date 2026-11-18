@@ -1,19 +1,25 @@
 ﻿@page "/"
 @attribute [Authorize]
 @inject WarehouseApiClient Api
+@inject SessionPersistence Sessions
+@inject NavigationManager Nav
 
 <PageTitle>Обзор — Склад</PageTitle>
 
 <div class="page-head">
     <div>
-        <h1>Обзор смены</h1>
-        <p>Сводка по номенклатуре, дефициту и последним поставкам.</p>
+        <h1>Обзор</h1>
+        <p>Сводка по товарам, дефициту и поставкам.</p>
     </div>
 </div>
 
 @if (_loading)
 {
     <p class="muted">Загрузка…</p>
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <p class="error-text">@_error</p>
 }
 else
 {
@@ -34,12 +40,11 @@ else
 
     <div class="panel">
         <div class="panel-pad">
-            <h3 style="margin:0 0 8px;font-family:var(--font-display)">Что требует внимания</h3>
-            <p class="muted" style="margin:0">Позиции ниже минимального остатка</p>
+            <h3 style="margin:0 0 8px;font-family:var(--font-display)">Низкий остаток</h3>
         </div>
         @if (_lowItems.Count == 0)
         {
-            <div class="panel-pad"><p class="empty-note">Дефицита нет — можно спокойно работать.</p></div>
+            <div class="panel-pad"><p class="empty-note">Дефицита нет.</p></div>
         }
         else
         {
@@ -70,6 +75,7 @@ else
 
 @code {
     private bool _loading = true;
+    private string? _error;
     private int _products;
     private int _low;
     private int _deliveries;
@@ -77,14 +83,37 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var products = await Api.GetProductsAsync();
-        var stock = await Api.GetStockAsync(lowOnly: true);
-        var deliveries = await Api.GetDeliveriesAsync();
+        if (!await Sessions.TryRestoreAsync())
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
 
-        _products = products?.TotalCount ?? 0;
-        _low = stock?.TotalCount ?? 0;
-        _deliveries = deliveries?.TotalCount ?? 0;
-        _lowItems = stock?.Items.ToList() ?? [];
-        _loading = false;
+        try
+        {
+            var products = await Api.GetProductsAsync();
+            var stock = await Api.GetStockAsync(lowOnly: true);
+            var deliveries = await Api.GetDeliveriesAsync();
+
+            if (products is null || stock is null || deliveries is null)
+            {
+                _error = "Не удалось загрузить данные. Войдите снова.";
+                await Sessions.ClearAsync();
+                return;
+            }
+
+            _products = products.TotalCount;
+            _low = stock.TotalCount;
+            _deliveries = deliveries.TotalCount;
+            _lowItems = stock.Items.ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 }

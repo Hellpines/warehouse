@@ -2,13 +2,15 @@
 @attribute [Authorize]
 @inject WarehouseApiClient Api
 @inject TokenStore Tokens
+@inject SessionPersistence Sessions
+@inject NavigationManager Nav
 
 <PageTitle>Поставки — Склад</PageTitle>
 
 <div class="page-head">
     <div>
         <h1>Поставки</h1>
-        <p>Накладные и позиции. Создание доступно складу и менеджеру.</p>
+        <p>Накладные и позиции.</p>
     </div>
     @if (CanCreate)
     {
@@ -93,6 +95,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await Sessions.TryRestoreAsync())
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
         await LoadAsync();
         var suppliers = await Api.GetSuppliersAsync();
         _suppliers = suppliers?.Items.ToList() ?? [];
@@ -111,7 +119,7 @@
         {
             supplierId = _supplierId,
             documentNumber = _doc,
-            notes = "Из Blazor",
+            notes = (string?)null,
             items = new[]
             {
                 new { productId = _productId, quantity = _qty, unitPrice = _price }

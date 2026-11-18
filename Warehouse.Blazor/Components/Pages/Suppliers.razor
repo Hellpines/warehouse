@@ -2,13 +2,15 @@
 @attribute [Authorize]
 @inject WarehouseApiClient Api
 @inject TokenStore Tokens
+@inject SessionPersistence Sessions
+@inject NavigationManager Nav
 
 <PageTitle>Поставщики — Склад</PageTitle>
 
 <div class="page-head">
     <div>
         <h1>Поставщики</h1>
-        <p>Справочник контрагентов. Изменение — только менеджер.</p>
+        <p>Справочник контрагентов.</p>
     </div>
     @if (IsManager)
     {
@@ -73,7 +75,16 @@
 
     private bool IsManager => Tokens.Session?.Role == "Manager";
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Sessions.TryRestoreAsync())
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {

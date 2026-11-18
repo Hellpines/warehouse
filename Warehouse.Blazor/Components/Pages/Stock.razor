@@ -2,13 +2,15 @@
 @attribute [Authorize]
 @inject WarehouseApiClient Api
 @inject TokenStore Tokens
+@inject SessionPersistence Sessions
+@inject NavigationManager Nav
 
 <PageTitle>Остатки — Склад</PageTitle>
 
 <div class="page-head">
     <div>
         <h1>Остатки</h1>
-        <p>Текущие количества и быстрая корректировка кладовщиком.</p>
+        <p>Текущие количества на складе.</p>
     </div>
     <div class="toolbar">
         <label class="muted"><input type="checkbox" @bind="_lowOnly" @bind:after="LoadAsync" /> только дефицит</label>
@@ -71,7 +73,16 @@
     private bool CanEdit =>
         Tokens.Session?.Role is "Manager" or "Storekeeper";
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Sessions.TryRestoreAsync())
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        await LoadAsync();
+    }
 
     private async Task LoadAsync()
     {
